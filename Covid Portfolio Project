@@ -1,0 +1,190 @@
+SELECT *
+FROM dbo.[covid deaths1]
+WHERE continent IS NOT NULL
+ORDER BY 3,4;
+
+--SELECT *
+--FROM dbo.[covid vaccination]
+--ORDER BY 3,4;
+
+--SELECT Data that will be used in this Project
+
+SELECT [location],[date],total_cases,new_cases,total_deaths,population
+FROM dbo.[covid deaths1]
+ORDER BY 1,2;
+
+--Looking at Total Cases vs Total Deaths
+--Shows the likelihood of dying if you are contracted with covid in your country
+--You are able to filter by country
+
+SELECT [location],[date],total_cases,total_deaths,(total_deaths/total_cases)*100 AS PercentageDeath
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+ORDER BY 1,2;
+
+--Looking at Total Cases vs Population
+--Shows what percentage of population got covid
+
+SELECT [location],[date],total_cases,population,(total_cases/population)*100 AS PopulationInfected
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+ORDER BY 1,2;
+
+--Looking at Countries with the Highest Infection Rate compared to Population
+
+SELECT [location], population, MAX(total_cases) AS HighestInfectionCount, MAX((total_cases/population))*100 AS PercentPopulationIfected
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+GROUP BY [location], population
+ORDER BY PercentPopulationIfected DESC;
+
+--Showing Countries with the Highest Death Count per Population
+
+SELECT [location], MAX(total_deaths) AS TotalDeathCount
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+GROUP BY [location]
+ORDER BY TotalDeathCount DESC;
+
+-- Highest Death Count per Population by Continent
+
+SELECT [location], MAX(total_deaths) AS TotalDeathCount
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NULL
+GROUP BY [location]
+ORDER BY TotalDeathCount DESC;
+
+--Another way for better Visualization
+--SELECT [location], MAX(total_deaths) AS TotalDeathCount
+--FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+--WHERE continent IS NULL
+--GROUP BY [continent]
+--ORDER BY TotalDeathCount DESC);
+
+--Daily Global Numbers
+
+SELECT [date], SUM(new_cases) AS DailyCases ,SUM(new_deaths) AS DailyDeath, SUM(new_deaths)/SUM(new_cases)*100 AS PercentageDeath --(total_deaths/total_cases)*100 AS PercentageDeath
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+GROUP BY [date]
+ORDER BY 1,2;
+
+-- Overall Percentage of Death after Infection = 2.112000
+SELECT SUM(new_cases) AS DailyCases ,SUM(new_deaths) AS DailyDeath, SUM(new_deaths)/SUM(new_cases)*100 AS PercentageDeath --(total_deaths/total_cases)*100 AS PercentageDeath
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+--GROUP BY [date]
+ORDER BY 1,2;
+
+--Joining Covid Vaccination Table
+SELECT *
+FROM [PORTFOLIO].[dbo].[covid deaths1] as dea
+JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+    ON dea.LOCATION = vac.LOCATION
+        and dea.DATE =vac.DATE
+;
+
+-- Looking at Total Population vs Vaccinations
+
+---SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations, 
+---SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location)
+---FROM PORTFOLIO.dbo.[covid deaths1] as dea 
+---JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+---ON dea.[location] = vac.[location]
+---and dea.DATE =vac.DATE
+---WHERE dea.continent IS NOT NULL
+---ORDER BY 2,3
+
+-- Problem with vaccination dataset because of multiply missing values and conversion errors.
+-- Vaccination dataset fixed and re-imported, will be tested
+--SELECT *
+--FROM [PORTFOLIO].[dbo].[CovidVaccinations]
+-- IT WORKS :)
+
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date ) AS rolling_people_vaccinated
+FROM PORTFOLIO.dbo.[covid deaths1] as dea 
+JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+ON dea.[location] = vac.[location]
+and dea.DATE =vac.DATE
+WHERE dea.continent IS NOT NULL
+ORDER BY 2,3
+
+--Using a CTE(commom table expression)
+
+WITH PopVsVac ( continent, LOCATION, date, population, new_vaccinations, rolling_people_vaccinateed )
+AS
+(
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date ) AS rolling_people_vaccinated
+FROM PORTFOLIO.dbo.[covid deaths1] as dea 
+JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+ON dea.[location] = vac.[location]
+and dea.DATE =vac.DATE
+WHERE dea.continent IS NOT NULL
+--ORDER BY 2,3
+)
+SELECT*, (rolling_people_vaccinateed/population)* 100 AS PercentagePopulationVac
+FROM PopVsVac
+
+-- Using a TEMP TABLE
+DROP TABLE IF EXISTS #PercentagePopulationVac
+CREATE TABLE #PercentagePopulationVac
+(
+Continent NVARCHAR(255),
+Location NVARCHAR(255),
+Date DATE,
+Population NUMERIC,
+New_Vaccination NUMERIC,
+RollingPeopleVaccinated NUMERIC
+)
+INSERT INTO #PercentagePopulationVac
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date ) AS rolling_people_vaccinated
+FROM PORTFOLIO.dbo.[covid deaths1] as dea 
+JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+ON dea.[location] = vac.[location]
+and dea.DATE =vac.DATE
+--WHERE dea.continent IS NOT NULL
+
+SELECT*, (RollingPeopleVaccinated/population)* 100 AS PercentagePopulationVac
+FROM #PercentagePopulationVac
+
+--Creating Views to Store Data for later View
+
+CREATE VIEW PercentagePopulationVac AS
+SELECT dea.continent, dea.location, dea.date, dea.population, vac.new_vaccinations,
+SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.Date ) AS rolling_people_vaccinated
+FROM PORTFOLIO.dbo.[covid deaths1] as dea 
+JOIN [PORTFOLIO].[dbo].[CovidVaccinations] as vac
+ON dea.[location] = vac.[location]
+and dea.DATE =vac.DATE
+WHERE dea.continent IS NOT NULL
+--ORDER BY 2,3
+;
+
+CREATE VIEW PercentageDeath AS
+SELECT SUM(new_cases) AS DailyCases ,SUM(new_deaths) AS DailyDeath, SUM(new_deaths)/SUM(new_cases)*100 AS PercentageDeath --(total_deaths/total_cases)*100 AS PercentageDeath
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NOT NULL
+GROUP BY [date]
+--ORDER BY 1,2;
+;
+
+CREATE VIEW TotalDeathCount AS
+SELECT [location], MAX(total_deaths) AS TotalDeathCount
+FROM dbo.[covid deaths1]
+--WHERE [location] LIKE '%state%'
+WHERE continent IS NULL
+GROUP BY [location]
+--ORDER BY TotalDeathCount DESC;
+;
