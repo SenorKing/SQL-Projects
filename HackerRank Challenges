@@ -1,0 +1,27 @@
+-- Basic Challenges >> City Columns: ID, Name, Countrycode, District, Population
+
+-- Problem 1 : Query all columns for all American cities in the CITY table with populations larger than 100000. The CountryCode for America is USA.
+-- Solution: SELECT * FROM CITY WHERE COUNTRYCODE = 'USA' AND POPULATION > 100000;
+
+-- Problem 2 : Query the NAME field for all American cities in the CITY table with populations larger than 120000. The CountryCode for America is USA.
+-- Solution: SELECT name FROM CITY WHERE COUNTRYCODE = 'USA' AND POPULATION > 120000;
+
+-- Problem 3: Query all columns (attributes) for every row in the CITY table.
+-- Solution: Select * from city ;
+
+-- Problem 4: Query all columns for a city in CITY with the ID 1661.
+-- Solution: Select * From CITY Where ID = '1661';
+
+-- Problem 5: Query all attributes of every Japanese city in the CITY table. The COUNTRYCODE for Japan is JPN.
+-- Solution: Select * From CITY Where COUNTRYCODE = 'JPN';
+
+-- Problem 6: Query the names of all the Japanese cities in the CITY table. The COUNTRYCODE for Japan is JPN.
+-- Solution: Select NAME From CITY Where COUNTRYCODE = 'JPN';
+
+--The STATION table is described as follows: ID, CITY, STATE, LAT_N, LONG_W
+
+-- Problem 7: Query a list of CITY and STATE from the STATION table.
+-- Solution: Select CITY, STATE From STATION;
+
+-- PROBLEM 8: Query a list of CITY names from STATION for cities that have an even ID number. Print the results in any order, but exclude duplicates from the answer.
+-- SOLUTION: Select Distinct CITY From STATION Where mod(ID,2)= 0 Order by City desc; 
