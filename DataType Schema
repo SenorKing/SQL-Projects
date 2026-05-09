@@ -1,0 +1,48 @@
+/* [4] Run "SHOW DATABASES" to see all databases available in your MySQL DBMS */
+SHOW DATABASES;
+
+/* [4b] Run "SHOW TABLES" to see all tables in the University Database */
+SHOW TABLES;
+
+/* [5] Run "SHOW TABLES" against database "udb" to see all tables in that database*/
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = 'udb';
+
+/* [6] Run "SHOW TABLES" against database "information_schema" to see all tables in that database*/
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = 'information_schema';
+
+/* [7] Run "DESC information_schema.tables" to see its columns */
+DESC information_schema.tables;
+
+/* [8] Run "DESC information_schema.columns" to see its columns */
+DESC information_schema.columns;
+
+/* [9] Run "DESC information_schema.table_constraints" to see its columns */
+DESC information_schema.table_constraints;
+
+/* [10] Create a view v_tables_columns that contains each db name, its tables, and their columns,
+data-types, and other "interesting" columns.Use the rename (AS) feature as appropriate.
+sort alphabetically by db name, table name, and then ordinal number of column */
+CREATE OR REPLACE VIEW v_table_columns AS
+                SELECT TABLE_SCHEMA AS 'data_base', TABLE_NAME AS 'table', COLUMN_NAME AS 'column' , ORDINAL_POSITION AS 'no.', IS_NULLABLE AS 'nullable', DATA_TYPE AS 'data_type', COALESCE(CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, 0) AS 'size'
+                FROM information_schema.columns
+                WHERE TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')
+                ORDER BY TABLE_SCHEMA, TABLE_NAME, ORDINAL_POSITION;
+
+/* [10b] retrieve all rows from view v_tables_columns */
+SELECT * FROM v_table_columns;
+
+
+/* [11] Create a view v_udb_datatypes listing all the different data types being used in the university database,
+using DISTINCT to filter out the duplicates.Sort the results in alphabetical order of data type */
+CREATE OR REPLACE VIEW v_udb_datatypes AS
+        SELECT DISTINCT data_type
+        FROM v_table_columns
+        WHERE data_base = 'udb'
+        ORDER BY data_type;
+
+/* [11b] Retrieve all rows from v_udb_datatypes */
+SELECT * FROM v_udb_datatypes
