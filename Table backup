@@ -1,0 +1,39 @@
+/* Use database */
+USE meta;
+
+/* Drop table if it exists */
+    DROP TABLE IF EXISTS backup;
+
+/* [1] In the meta database, create a new table "backup" with the following columns and datatypes */
+CREATE TABLE backup (
+    backup_id INT AUTO_INCREMENT PRIMARY KEY,
+    db VARCHAR(20) NOT NULL,
+    relation VARCHAR(30) NOT NULL,
+    num_rows INT NOT NULL,
+    num_cols INT NOT NULL,
+    csv_length INT NOT NULL,
+    xml_length INT NOT NULL,
+    json_length INT NOT NULL,
+    csv_data TEXT NOT NULL,
+    xml_data TEXT NOT NULL,
+    json_data JSON NOT NULL,
+    saved_dtm DATETIME DEFAULT CURRENT_TIMESTAMP);
+
+
+/* [7a] Create a view v_table_backups that has a list of backups without the actual csv_data, xml_data, and json_data */
+CREATE OR REPLACE VIEW meta.v_tables_backups AS
+SELECT
+    backup_id,
+    db,
+    relation,
+    num_rows,
+    num_cols,
+    csv_length,
+    xml_length,
+    json_length,
+    saved_dtm
+FROM meta.backup;
+
+
+/* Retrieve view*/
+SELECT * FROM meta.v_table_backups
