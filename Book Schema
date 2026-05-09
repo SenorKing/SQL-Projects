@@ -1,0 +1,237 @@
+/* Drop table book_0nf */
+DROP SCHEMA IF EXISTS books;
+
+/* Create new schema books */
+CREATE SCHEMA books;
+
+/* Use book schema as default */
+USE books;
+
+
+/* Create our ONF_book table */
+CREATE TABLE 0NF_book ( 
+	title VARCHAR (50), 
+    author VARCHAR (50), 
+    author_nationality VARCHAR (50), 
+    book_format VARCHAR (50), 
+    price DECIMAL (5, 2), 
+    book_subject VARCHAR (50), 
+    pages INT,
+    thickness VARCHAR (50),
+    publisher VARCHAR (50),
+    publisher_country VARCHAR(50),
+    genre_id INT,
+    genre_name VARCHAR (50)
+);
+    
+/* Insert a row into 0NF_book */    
+INSERT INTO 0NF_book
+VALUES ('Beginning MySQL Database Design and Optimization', 
+		'Chad Russell', 
+        'American', 
+        'Hardcover', 
+        49.99, 
+        'MySQL Database Design', 
+        520, 
+        'Thick', 
+        'Apress', 
+        'USA', 
+        1, 
+        'Tutorial'
+);
+
+/* Retrieve all rows from 0NF_book table */
+SELECT * FROM 0NF_book;
+
+/* Create a subject table */
+CREATE TABLE 1NF_book_subject ( 
+	book_title VARCHAR (50), 
+    subject_name VARCHAR (50),
+	PRIMARY KEY (book_title, subject_name)
+);
+
+/* Insert a row into 1NF_book */    
+INSERT INTO 1NF_book_subject
+VALUES ('Beginning MySQL Database Design and Optimization', 'MYSQL'),
+		('Beginning MySQL Database Design and Optimization', 'Database'),
+        ('Beginning MySQL Database Design and Optimization', 'Design');
+
+/* Retrieve all rows from 1NF_book_subject table */
+SELECT * FROM 1NF_book_subject;
+
+/* Create 2NF_price table*/
+CREATE TABLE 2NF_price ( 
+	book_title VARCHAR (100), 
+    book_format VARCHAR (50),
+    price DECIMAL(5,2),
+    PRIMARY KEY(book_title, book_format)
+);
+
+/* Insert into 2NF_price table */    
+INSERT INTO 2NF_price
+VALUES ('Beginning MySQL Database Design and Optimization',	'Hardcover', 49.99),
+        ('Beginning MySQL Database Design and Optimization', 'E-book', 22.34),
+        ('The Relational Model for Database Management: Version 2',	'E-book', 13.88),
+        ('The Relational Model for Database Management: Version 2',	'Paperback', 39.99);
+
+/* Retrieve all price from 2NF_price table */
+SELECT * FROM 2NF_price;
+
+/* Create our 1NF_book table */
+CREATE TABLE 1NF_book ( 
+	title VARCHAR (50), 
+    author VARCHAR (50), 
+    author_nationality VARCHAR (50), 
+    book_format VARCHAR (50), 
+    price DECIMAL (5, 2), 
+    pages INT,
+    thickness VARCHAR (50),
+    publisher VARCHAR (50),
+    publisher_country VARCHAR(50),
+    genre_id INT,
+    genre_name VARCHAR (50), 
+    PRIMARY KEY (title, book_format),
+    FOREIGN KEY (title) REFERENCES 1NF_book_subject(book_title)
+);
+
+/* Insert a row into 1NF_book */    
+INSERT INTO 1NF_book
+VALUES ('Beginning MySQL Database Design and Optimization', 
+		'Chad Russell', 
+        'American', 
+        'Hardcover', 
+        49.99, 
+        520, 
+        'Thick', 
+        'Apress', 
+        'USA', 
+        1, 
+        'Tutorial');  
+
+/* Retrieve all rows from 1NF_book table */
+SELECT * FROM 1NF_book;
+
+/* Create our 2NF_book table */
+CREATE TABLE 2NF_book ( 
+	title VARCHAR (100), 
+    author VARCHAR (50), 
+    author_nationality VARCHAR (50), 
+    pages INT,
+    thickness VARCHAR (50),
+    publisher VARCHAR (50),
+    publisher_country VARCHAR(50),
+    genre_id INT,
+    gerne_name VARCHAR (50), 
+    PRIMARY KEY (title),
+	FOREIGN KEY (title) REFERENCES 2NF_price(book_title)
+);
+
+/* Insert a row into 1NF_book */    
+INSERT INTO 2NF_book
+VALUES ('Beginning MySQL Database Design and Optimization', 'Chad Russell', 'American', 520, 'Thick', 'Apress', 'USA', 1, 'Tutorial'),
+		('The Relational Model for Database Management: Version 2', 'E.F.Codd', 'British', 538, 'Thick', 'Addison-Wesley', 'USA', 2, 'Popular science');  
+
+/* Retrieve all rows from 2NF_book table */
+SELECT * FROM 2NF_book;
+
+
+/* Create 3NF_price table*/
+CREATE TABLE 3NF_price ( 
+	book_title VARCHAR (100), 
+    book_format VARCHAR (50),
+    price DECIMAL(5,2),
+    PRIMARY KEY(book_title, book_format)
+);
+
+/* Insert into 3NF_price table */    
+INSERT INTO 3NF_price
+VALUES ('Beginning MySQL Database Design and Optimization',	'Hardcover', 49.99),
+        ('Beginning MySQL Database Design and Optimization', 'E-book', 22.34),
+        ('The Relational Model for Database Management: Version 2',	'E-book', 13.88),
+        ('The Relational Model for Database Management: Version 2',	'Paperback', 39.99);
+
+/* Retrieve all price from 3NF_price table */
+SELECT * FROM 3NF_price;
+
+/* Create 3NF_author table*/
+CREATE TABLE 3NF_author ( 
+	author VARCHAR (100) PRIMARY KEY, 
+    nationality VARCHAR (50)
+);
+
+/* Insert into 3NF_author table */
+INSERT INTO 3NF_author
+VALUES ('Chad Russell',	'American'),
+        ('E.F.Codd',	'British');
+
+/* Retrieve all rows from 3NF_author table */
+SELECT * FROM 3NF_author;
+
+/* Create 3NF_publisher table*/
+CREATE TABLE 3NF_publisher ( 
+	publisher VARCHAR (100) PRIMARY KEY, 
+    country VARCHAR (50)
+);
+
+/* Insert into 3NF_publisher table */
+INSERT INTO 3NF_publisher
+VALUES ('Apress', 'USA'),
+        ('Addison-Wesley', 'USA');
+
+/* Retrieve all price from 3NF_price table */
+SELECT * FROM 3NF_publisher;
+
+/* Create 3NF_genre table*/
+CREATE TABLE 3NF_genre ( 
+	genre_id INT PRIMARY KEY, 
+    genre_name VARCHAR (50)
+);
+
+/* Insert into 3NF_genre table */
+INSERT INTO 3NF_genre
+VALUES ( 1,	'Tutorial'),
+        (2,	'Popular science');
+
+/* Retrieve all rows from 3NF_genre table */
+SELECT * FROM 3NF_genre;
+
+/* Create our 3NF_book table */
+CREATE TABLE 3NF_book ( 
+	title VARCHAR (100), 
+    author VARCHAR (50), 
+    pages INT,
+    thickness VARCHAR (50),
+    publisher VARCHAR (50),
+    genre_id INT,
+    PRIMARY KEY (title),
+	FOREIGN KEY (title) REFERENCES 3NF_price(book_title),
+	FOREIGN KEY (publisher) REFERENCES 3NF_publisher(publisher),
+	FOREIGN KEY (author) REFERENCES 3NF_author(author),
+	FOREIGN KEY (genre_id) REFERENCES 3NF_genre(genre_id)
+);
+
+/* Insert a row into 3NF_book */    
+INSERT INTO 3NF_book
+VALUES ('Beginning MySQL Database Design and Optimization', 'Chad Russell', 520, 'Thick', 'Apress', 1),
+		('The Relational Model for Database Management: Version 2', 'E.F.Codd', 538, 'Thick', 'Addison-Wesley', 2);  
+
+/* Retrieve all rows from 3NF_book table */
+SELECT * FROM 3NF_book;
+
+
+/* Create view v_everything*/
+CREATE OR REPLACE VIEW v_everything AS (
+		SELECT 3NF_book.title, 3NF_book.author, 3NF_author.nationality AS author_nationality, 3NF_book.pages,
+			3NF_book.thickness, 3NF_publisher.publisher, 3NF_publisher.country AS publisher_country, 3NF_book.genre_id, 3NF_genre.genre_name 
+		FROM 3NF_book 
+        JOIN 3NF_price ON 3NF_book.title = 3NF_price.book_title
+        JOIN 3NF_author ON 3NF_book.author = 3NF_author.author
+        JOIN 3NF_publisher ON 3NF_book.publisher = 3NF_publisher.publisher
+        JOIN 3NF_genre ON 3NF_book.genre_id = 3NF_genre.genre_id
+) ;
+
+SELECT * FROM v_everything;
+
+
+
+
