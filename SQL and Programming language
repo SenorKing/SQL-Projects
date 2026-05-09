@@ -1,0 +1,110 @@
+# Database Systems (CSCI 331)
+# Winter 2026
+# Assignment 3 - SQL and Programming language
+# Andre King
+
+import time
+import pymysql
+import OutputUtil as ou
+
+def getPassword():
+    with open('../pwd.txt', "r") as file:
+        return file.read().strip()
+
+def run_queries(queries, user, db, assignment):
+    password = getPassword()
+    tables = []
+    conn = pymysql.connections.Connection(host="localhost", user="root", passwd=password, db=db)
+    for query in queries:
+        sql, desc = query
+        sql = sql.strip() #remove any extra spaces
+        try:
+            start = time.time()
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            end = time.time()
+            duration = end - start
+            rows = cursor.fetchall()
+            log_query(conn, sql, desc, db, len(rows), user, assignment, duration)
+            cmd = sql.split(' ')[0].upper()
+            if cmd in ["SELECT", "SHOW", "DESC"]:
+                headers = [desc[0] for desc in cursor.description] # get column descriptions
+                data = [[str(col) for col in row] for row in rows] # get all the results
+                title = desc + "<br>" + sql # descriptions of the table
+                alignments = ["l"] * len(headers) # left align
+                types = ["S"] * len(headers) # make everything string
+                tables.append([title, headers, types, alignments, data])
+        except:
+            print("Error while running query", sql)
+            conn.rollback() # unto action
+            conn.close()
+            return []
+    conn.commit()  # commit saves data in database if no error
+    conn.close() #close
+    return tables
+
+def log_query(conn, query_text, query_desc, query_db, query_rows, query_user, query_assn, query_dur):
+    query_text = query_text.replace("'", "\\'")
+    query_text = query_desc.replace("'", "\\'")
+    query = f"INSERT into meta.query (query_text, query_desc, query_db, query_rows, query_user, query_assn, query_dur) \nvalues ('{query_text}', '{query_desc}', '{query_db}', {query_rows}, '{query_user}', '{query_assn}', {query_dur})"
+# print(query)
+    cursor = conn.cursor()
+    cursor.execute(query)
+
+def main():
+    user = "Andre"
+    db = "udb"
+    assn = "03"
+    file_name = f"Assignment{assn}.html"
+    my_title = f"Queries for Assignment{assn}"
+
+    sql1 = "SHOW TABLES"
+    desc1 = "Show all tables in the database"
+    queries = [(sql1, desc1)]
+
+    tables = ["advisor", "classroom", "course", "department", "instructor", "prereq", "section", "student", "takes", "teaches", "time_slot"]
+    for table in tables:
+        sql2 = f"DESC {table}"
+        desc2 = f"Show all columns in the table {table}"
+        queries.append((sql2, desc2))
+
+        sql2a = f"SELECT * FROM {table}"
+        desc2a = f"Show all columns in the table {table}"
+        queries.append((sql2a, desc2a))
+
+        sql2b = f"SELECT COUNT(*) AS row_count FROM {table}"
+        desc2b = f"Count all rows in the table {table}"
+        queries.append((sql2b, desc2b))
+
+    output_tables = run_queries(queries, user, db, assn)
+
+    queries4 = []
+    sql4a = f"SELECT id, name, salary/12 AS monthly_salary FROM instructor"
+    desc4a = f"Get instructors and their monthly salary"
+    queries4.append((sql4a, desc4a))
+
+    sql4b = f"SELECT name FROM instructor WHERE dept_name = 'Comp. Sci.' and salary > 70000"
+    desc4b = f"Get instructors with monthly salary more than 70000"
+    queries4.append((sql4b, desc4b))
+
+    sql4c = (f"SELECT DISTINCT T.name "
+             f"FROM instructor AS T, instructor AS S "
+             f"WHERE T.salary > S.salary"
+             f"and S.dept_name = 'Comp. Sci.'")
+    desc4c = (f"Find the name of all instructors with higher salary than some instructors in Comp. Sci.")
+    queries4c = [(sql4c, desc4c)]
+    output_tables4 = run_queries(queries4, user, db, assn)
+    output_tables += output_tables4
+
+    sql5 = f"SELECT * FROM meta.query WHERE query_assn = '{assn}'"
+    desc5 = f"Get query log for the current assignment"
+    queries5 = [(sql5, desc5)]
+    output_table5 = run_queries(queries5, user, "meta", assn)
+    output_tables += output_table5
+
+    if len(output_tables) > 0:
+        ou.write_html_file_new(file_name, my_title, None, output_tables, True, None, True)
+
+
+if __name__ == "__main__":
+    main()
