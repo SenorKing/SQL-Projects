@@ -1,0 +1,92 @@
+# Database Systems (CSCI 331)
+# Winter 2026
+# Assignment 11 - DB Application Login
+# Andre King
+
+from flask import Flask, render_template, request, redirect, url_for, session
+import pymysql
+
+logged_in = None
+app = Flask(__name__)
+
+def get_password():
+    return 'Febrero26'
+
+def execute_query(sql, db):
+    password = get_password()
+    conn = pymysql.connections.Connection(host="localhost", user="root", passwd=password, db=db)
+
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+
+def run_query(db, sql):
+    password = get_password()
+    conn = pymysql.connections.Connection(host="localhost", user="root", passwd=password, db=db)
+
+    try:
+        cursor = conn.cursor()
+        print(sql)
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        headers = [desc[0] for desc in cursor.description]
+        data = [[str(col) for col in row] for row in rows]
+    except:
+        print("Error while running query", sql)
+        # undo the changes that you made
+        conn.close()
+        return []
+    conn.close()
+    return headers, data
+
+
+@app.route('/')
+def hello_world():  # put application's code here
+    return 'Hello World!'
+
+@app.route('/name/<name>')
+def Hello_name(name):  # put application's code here
+    return f'Hello {name}!'
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    global logged_in
+    print("In login")
+    typed_name = request.form['name']
+    typed_id = request.form['id']
+    typed_role = request.form['role']
+    print(typed_name, typed_id, typed_role)
+    query = f"SELECT * FROM {typed_role} WHERE id = '{typed_id}' AND name = '{typed_name}'"
+    rows = execute_query(query, 'udb')
+    if len(rows) > 0:
+        logged_in = typed_name
+        return f'{typed_role} {typed_name} has successfully logged in to the system'
+    else:
+        logged_in = None
+        return f'{typed_role} {typed_name} does not exist'
+
+@app.route('/retrieve/<table>')
+def retrieve(table=None):
+    return retrieve_table(table)
+
+
+def retrieve_table(table) -> str:
+    global logged_in
+    if not logged_in:
+        return "You are not logged in"
+    else:  # get the data
+        query = f"SELECT * FROM {table}"
+        headers, data = run_query("udb", query)
+        return render_template('results.html', headers=headers, data=data)
+
+
+@app.route('/table/', methods=['POST', 'GET'])
+def table():
+    table_name = request.form['table']
+    return retrieve_table(table_name)
+
+if __name__ == '__main__':
+    app.run()
