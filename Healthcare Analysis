@@ -1,0 +1,54 @@
+DROP SCHEMA healthcare_db;
+CREATE DATABASE healthcare_db;
+USE healthcare_db;
+
+CREATE TABLE Patients(
+	patient_id VARCHAR(50) PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    gender CHAR(2),
+    date_of_birth DATE,
+    registration_date DATE,
+    insurance_provider VARCHAR(100)
+);
+
+CREATE TABLE doctors (
+    doctor_id VARCHAR(10) PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    specialization VARCHAR(100),
+    phone_number VARCHAR(20),
+    years_experience INT,
+    hospital_branch VARCHAR(100),
+    email VARCHAR(100)
+);
+
+CREATE TABLE Appointments(
+	appointment_id INT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    appointment_date DATE,
+    appointment_time TIME,
+    appointment_reason VARCHAR(255),
+    status VARCHAR(20),
+    
+    FOREIGN KEY(patient_id)
+    REFERENCES Patients(patient_id),
+    FOREIGN KEY(doctor_id)
+    REFERENCES Doctors(doctor_id)
+);
+
+CREATE TABLE Treatment(
+	treatment_id INT PRIMARY KEY,
+    appointment_id INT,
+    treatment_type VARCHAR(100),
+    cost DECIMAL(10,2)
+);
+
+CREATE TABLE Billing(
+    bill_id INT PRIMARY KEY,
+    treatment_id INT,
+    amount DECIMAL(10,2),
+    payment_method VARCHAR(50),
+    payment_status VARCHAR(20)
+);
